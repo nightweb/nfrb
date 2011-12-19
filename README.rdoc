@@ -1,0 +1,49 @@
+= nfrb
+
+Nfrb is a very simple yet fast gem that can be used to parse nfcapd files.
+
+== Usage
+
+=== Installation
+   
+   # git clone git://github.com/dguerri/nfrb.git
+   # cd nfrb
+   # bundle install
+   # rake install
+
+=== Samplre code
+  
+   require 'nfrb'
+     
+   nfparser = NfRb::NfFile.new
+     
+   puts "Start"
+   i=0
+   start_t = Time.now
+   nfparser.process_file("./nfcapd.201112181720") { |flow| puts flow.inspect(); i+=1 }
+   stop_t = Time.now
+   puts "Finished"
+   fps = i / (stop_t - start_t)
+   puts "#{i} flows processed..."
+   puts "Flows per seconds = #{fps}"
+
+=== Sample output benchmark (i7)
+
+   325602 flows processed...
+   Flows per seconds = 40436.5330406422
+
+== Contributing to nfrb
+ 
+* Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet
+* Check out the issue tracker to make sure someone already hasn't requested it and/or contributed it
+* Fork the project
+* Start a feature/bugfix branch
+* Commit and push until you are happy with your contribution
+* Make sure to add tests for it. This is important so I don't break it in a future version unintentionally.
+* Please try not to mess with the Rakefile, version, or history. If you want to have your own version, or is otherwise necessary, that is fine, but please isolate to its own commit so I can cherry-pick around it.
+
+== Copyright
+
+Copyright (c) 2011 Davide Guerri. See LICENSE.txt for
+further details.
+

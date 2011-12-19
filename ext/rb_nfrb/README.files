@@ -1,0 +1,14 @@
+The following files are from nfdump v 1.6.4
+
+fts_compat.c 
+fts_compat.h 
+lzoconf.h
+lzodefs.h
+minilzo.h
+nf_common.h
+nffile.c
+nffile.h
+nfx.c
+nfx.h
+util.c
+util.h
