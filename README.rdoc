@@ -11,7 +11,7 @@ Nfrb is a very simple yet fast gem that can be used to parse nfcapd files.
    # bundle install
    # rake install
 
-=== Samplre code
+=== Sample code
   
 	require 'nfrb'
 
