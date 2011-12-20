@@ -40,7 +40,7 @@ typedef uint32_t    pointer_addr_t;
 static VALUE process_file(VALUE self, VALUE filename_v) {
 	master_record_t	master_record;
 	common_record_t *flow_record = NULL;
-	int done, ret, i, id;
+	int done, ret, i, j, id;
 	nffile_t *nffile = NULL;
 	extension_map_list_t extension_map_list;
 	VALUE hash_v = Qnil;
@@ -163,22 +163,22 @@ static VALUE process_file(VALUE self, VALUE filename_v) {
 					rb_hash_aset(hash_v, forwarding_status_sym, INT2FIX(master_record.fwd_status));	
 					rb_hash_aset(hash_v, tos_sym, INT2FIX(master_record.tos));	
 
-					// rb_hash_delete(hash_v, input_interface_sym);
-					// rb_hash_delete(hash_v, output_interface_sym);
-					// rb_hash_delete(hash_v, destination_as_sym);	
-					// rb_hash_delete(hash_v, source_as_sym);
-					// rb_hash_delete(hash_v, source_mask_sym);	
-					// rb_hash_delete(hash_v, destination_mask_sym);
-					// rb_hash_delete(hash_v, destination_tos_sym);
-					// rb_hash_delete(hash_v, direction_sym);
-					// rb_hash_delete(hash_v, next_hop_sym);	
-					// rb_hash_delete(hash_v, bgp_next_hop_sym);	
-					// rb_hash_delete(hash_v, source_vlan_sym);	
-					// rb_hash_delete(hash_v, destination_vlan_sym);		
-					
 					// netflow extension fields
-					i=0;
-					while ( (id = master_record.map_ref->ex_id[i++]) != 0 ) {
+					rb_hash_aset(hash_v, input_interface_sym , Qnil);
+					rb_hash_aset(hash_v, output_interface_sym, Qnil);
+					rb_hash_aset(hash_v, destination_as_sym  , Qnil);	
+					rb_hash_aset(hash_v, source_as_sym       , Qnil);
+					rb_hash_aset(hash_v, source_mask_sym     , Qnil);	
+					rb_hash_aset(hash_v, destination_mask_sym, Qnil);
+					rb_hash_aset(hash_v, destination_tos_sym , Qnil);
+					rb_hash_aset(hash_v, direction_sym       , Qnil);
+					rb_hash_aset(hash_v, next_hop_sym        , Qnil);	
+					rb_hash_aset(hash_v, bgp_next_hop_sym    , Qnil);	
+					rb_hash_aset(hash_v, source_vlan_sym     , Qnil);	
+					rb_hash_aset(hash_v, destination_vlan_sym, Qnil);		
+					
+					j=0;
+					while ( (id = master_record.map_ref->ex_id[j++]) != 0 ) {
 						switch(id) {
 							case EX_IO_SNMP_2:
 								rb_hash_aset(hash_v, input_interface_sym, INT2FIX(master_record.input));
