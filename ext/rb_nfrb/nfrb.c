@@ -57,7 +57,7 @@ static VALUE process_file(VALUE self, VALUE filename_v) {
 
 	nffile = OpenFile(filename, NULL);
 	if (!nffile)
-		rb_raise(rb_eIOError, "cannot open file '%s': %s", filename, strerror(errno));
+		rb_raise(rb_eIOError, "problem opening file '%s'", filename);
 
 	hash_v = rb_hash_new();
 
