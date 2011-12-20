@@ -47,6 +47,35 @@ static VALUE process_file(VALUE self, VALUE filename_v) {
 	char source_ip[40], destination_ip[40], nexthop_ip[40];
 	static char *filename = NULL;
 	
+	// precalculate symbols for performace boost
+	VALUE source_address_sym = ID2SYM(rb_intern("source_address"));
+	VALUE destination_address_sym = ID2SYM(rb_intern("destination_address"));
+	VALUE first_seen_sym = ID2SYM(rb_intern("first_seen"));
+	VALUE last_seen_sym = ID2SYM(rb_intern("last_seen"));
+	VALUE msec_first_seen_sym = ID2SYM(rb_intern("msec_first_seen"));
+	VALUE msec_last_seen_sym = ID2SYM(rb_intern("msec_last_seen"));
+	VALUE protocol_sym = ID2SYM(rb_intern("protocol"));
+	VALUE source_port_sym = ID2SYM(rb_intern("source_port"));
+	VALUE destination_port_sym = ID2SYM(rb_intern("destination_port"));
+	VALUE tcp_flags_sym = ID2SYM(rb_intern("tcp_flags"));
+	VALUE packets_sym = ID2SYM(rb_intern("packets"));
+	VALUE bytes_sym = ID2SYM(rb_intern("bytes"));
+	VALUE forwarding_status_sym = ID2SYM(rb_intern("forwarding_status")); 
+	VALUE tos_sym = ID2SYM(rb_intern("tos"));
+	VALUE input_interface_sym = ID2SYM(rb_intern("input_interface"));
+	VALUE output_interface_sym = ID2SYM(rb_intern("output_interface"));
+	VALUE destination_as_sym = ID2SYM(rb_intern("destination_as"));
+	VALUE source_as_sym = ID2SYM(rb_intern("source_as"));
+	VALUE source_mask_sym = ID2SYM(rb_intern("source_mask"));	
+	VALUE destination_mask_sym = ID2SYM(rb_intern("destination_mask"));
+	VALUE destination_tos_sym = ID2SYM(rb_intern("destination_tos"));
+	VALUE direction_sym = ID2SYM(rb_intern("direction"));
+	VALUE next_hop_sym = ID2SYM(rb_intern("next_hop"));	
+	VALUE bgp_next_hop_sym = ID2SYM(rb_intern("bgp_next_hop"));	
+	VALUE source_vlan_sym = ID2SYM(rb_intern("source_vlan"));	
+	VALUE destination_vlan_sym = ID2SYM(rb_intern("destination_vlan"));
+
+	
 	if (!rb_block_given_p())
 		rb_raise(rb_eArgError, "a block is required");		
 				
@@ -88,7 +117,7 @@ static VALUE process_file(VALUE self, VALUE filename_v) {
 			// Can't process block type "nffile->block_header->id". Skip block...
 			continue;
 		}
-
+		
 		flow_record = nffile->buff_ptr;
 		for (i=0; i < nffile->block_header->NumRecords; i++) {
 			if (flow_record->type == CommonRecordType) {
@@ -119,66 +148,66 @@ static VALUE process_file(VALUE self, VALUE filename_v) {
 					destination_ip[40-1] = 0;
 
 					// netflow common record fields
-					rb_hash_aset(hash_v, ID2SYM(rb_intern("source_address")), rb_tainted_str_new2(source_ip));
-					rb_hash_aset(hash_v, ID2SYM(rb_intern("destination_address")), rb_tainted_str_new2(destination_ip));
-					rb_hash_aset(hash_v, ID2SYM(rb_intern("first_seen")), INT2NUM(master_record.first));	
-					rb_hash_aset(hash_v, ID2SYM(rb_intern("last_seen")), INT2NUM(master_record.last));
-					rb_hash_aset(hash_v, ID2SYM(rb_intern("msec_first_seen")), INT2NUM(master_record.msec_first));	
-					rb_hash_aset(hash_v, ID2SYM(rb_intern("msec_last_seen")), INT2NUM(master_record.msec_last));
-					rb_hash_aset(hash_v, ID2SYM(rb_intern("protocol")), INT2FIX(master_record.prot));
-					rb_hash_aset(hash_v, ID2SYM(rb_intern("source_port")), INT2FIX(master_record.srcport));
-					rb_hash_aset(hash_v, ID2SYM(rb_intern("destination_port")), INT2FIX(master_record.dstport));	
-					rb_hash_aset(hash_v, ID2SYM(rb_intern("tcp_flags")), INT2FIX(master_record.tcp_flags));	
-					rb_hash_aset(hash_v, ID2SYM(rb_intern("packets")), INT2NUM((unsigned long long) master_record.dPkts));
-					rb_hash_aset(hash_v, ID2SYM(rb_intern("bytes")), INT2NUM((unsigned long long) master_record.dOctets));	
-					rb_hash_aset(hash_v, ID2SYM(rb_intern("forwarding_status")), INT2FIX(master_record.fwd_status));	
-					rb_hash_aset(hash_v, ID2SYM(rb_intern("tos")), INT2FIX(master_record.tos));	
+					rb_hash_aset(hash_v, source_address_sym, rb_tainted_str_new2(source_ip));
+					rb_hash_aset(hash_v, destination_address_sym, rb_tainted_str_new2(destination_ip));
+					rb_hash_aset(hash_v, first_seen_sym, INT2NUM(master_record.first));	
+					rb_hash_aset(hash_v, last_seen_sym, INT2NUM(master_record.last));
+					rb_hash_aset(hash_v, msec_first_seen_sym, INT2NUM(master_record.msec_first));	
+					rb_hash_aset(hash_v, msec_last_seen_sym, INT2NUM(master_record.msec_last));
+					rb_hash_aset(hash_v, protocol_sym, INT2FIX(master_record.prot));
+					rb_hash_aset(hash_v, source_port_sym, INT2FIX(master_record.srcport));
+					rb_hash_aset(hash_v, destination_port_sym, INT2FIX(master_record.dstport));	
+					rb_hash_aset(hash_v, tcp_flags_sym, INT2FIX(master_record.tcp_flags));	
+					rb_hash_aset(hash_v, packets_sym, INT2NUM((unsigned long long) master_record.dPkts));
+					rb_hash_aset(hash_v, bytes_sym, INT2NUM((unsigned long long) master_record.dOctets));	
+					rb_hash_aset(hash_v, forwarding_status_sym, INT2FIX(master_record.fwd_status));	
+					rb_hash_aset(hash_v, tos_sym, INT2FIX(master_record.tos));	
 
-					rb_hash_aset(hash_v, ID2SYM(rb_intern("input_interface")), Qnil);
-					rb_hash_aset(hash_v, ID2SYM(rb_intern("output_interface")), Qnil);
-					rb_hash_aset(hash_v, ID2SYM(rb_intern("destination_as")), Qnil);	
-					rb_hash_aset(hash_v, ID2SYM(rb_intern("source_as")), Qnil);
-					rb_hash_aset(hash_v, ID2SYM(rb_intern("source_mask")), Qnil);	
-					rb_hash_aset(hash_v, ID2SYM(rb_intern("destination_mask")), Qnil);
-					rb_hash_aset(hash_v, ID2SYM(rb_intern("destination_tos")), Qnil);
-					rb_hash_aset(hash_v, ID2SYM(rb_intern("direction")), Qnil);
-					rb_hash_aset(hash_v, ID2SYM(rb_intern("next_hop")), Qnil);	
-					rb_hash_aset(hash_v, ID2SYM(rb_intern("bgp_next_hop")), Qnil);	
-					rb_hash_aset(hash_v, ID2SYM(rb_intern("source_vlan")), Qnil);	
-					rb_hash_aset(hash_v, ID2SYM(rb_intern("destination_vlan")), Qnil);
-													
+					// rb_hash_delete(hash_v, input_interface_sym);
+					// rb_hash_delete(hash_v, output_interface_sym);
+					// rb_hash_delete(hash_v, destination_as_sym);	
+					// rb_hash_delete(hash_v, source_as_sym);
+					// rb_hash_delete(hash_v, source_mask_sym);	
+					// rb_hash_delete(hash_v, destination_mask_sym);
+					// rb_hash_delete(hash_v, destination_tos_sym);
+					// rb_hash_delete(hash_v, direction_sym);
+					// rb_hash_delete(hash_v, next_hop_sym);	
+					// rb_hash_delete(hash_v, bgp_next_hop_sym);	
+					// rb_hash_delete(hash_v, source_vlan_sym);	
+					// rb_hash_delete(hash_v, destination_vlan_sym);		
+					
 					// netflow extension fields
 					i=0;
 					while ( (id = master_record.map_ref->ex_id[i++]) != 0 ) {
 						switch(id) {
 							case EX_IO_SNMP_2:
-								rb_hash_aset(hash_v, ID2SYM(rb_intern("input_interface")), INT2FIX(master_record.input));
-								rb_hash_aset(hash_v, ID2SYM(rb_intern("output_interface")), INT2FIX(master_record.output));
+								rb_hash_aset(hash_v, input_interface_sym, INT2FIX(master_record.input));
+								rb_hash_aset(hash_v, output_interface_sym, INT2FIX(master_record.output));
 								break;
 							case EX_IO_SNMP_4:
-								rb_hash_aset(hash_v, ID2SYM(rb_intern("input_interface")), INT2NUM(master_record.input));
-								rb_hash_aset(hash_v, ID2SYM(rb_intern("output_interface")), INT2NUM(master_record.output));
+								rb_hash_aset(hash_v, input_interface_sym, INT2NUM(master_record.input));
+								rb_hash_aset(hash_v, output_interface_sym, INT2NUM(master_record.output));
 								break;
 							case EX_AS_2:
-								rb_hash_aset(hash_v, ID2SYM(rb_intern("destination_as")), INT2FIX(master_record.dstas));	
-								rb_hash_aset(hash_v, ID2SYM(rb_intern("source_as")), INT2FIX(master_record.input));
+								rb_hash_aset(hash_v, destination_as_sym, INT2FIX(master_record.dstas));	
+								rb_hash_aset(hash_v, source_as_sym, INT2FIX(master_record.input));
 								break;
 							case EX_AS_4:
-								rb_hash_aset(hash_v, ID2SYM(rb_intern("destination_as")), INT2NUM(master_record.dstas));	
-								rb_hash_aset(hash_v, ID2SYM(rb_intern("source_as")), INT2NUM(master_record.input));
+								rb_hash_aset(hash_v, destination_as_sym, INT2NUM(master_record.dstas));	
+								rb_hash_aset(hash_v, source_as_sym, INT2NUM(master_record.input));
 								break;
 							case EX_MULIPLE:
-								rb_hash_aset(hash_v, ID2SYM(rb_intern("source_mask")), INT2NUM(master_record.src_mask));	
-								rb_hash_aset(hash_v, ID2SYM(rb_intern("destination_mask")), INT2NUM(master_record.dst_mask));
-								rb_hash_aset(hash_v, ID2SYM(rb_intern("destination_tos")), INT2FIX(master_record.dst_tos));
-								rb_hash_aset(hash_v, ID2SYM(rb_intern("direction")), INT2FIX(master_record.dir));
+								rb_hash_aset(hash_v, source_mask_sym, INT2NUM(master_record.src_mask));	
+								rb_hash_aset(hash_v, destination_mask_sym, INT2NUM(master_record.dst_mask));
+								rb_hash_aset(hash_v, destination_tos_sym, INT2FIX(master_record.dst_tos));
+								rb_hash_aset(hash_v, direction_sym, INT2FIX(master_record.dir));
 								break;
 							case EX_NEXT_HOP_v4:
 								master_record.ip_nexthop.v4=htonl(master_record.ip_nexthop.v4);
 								nexthop_ip[0] = 0;
 								inet_ntop(AF_INET, &master_record.ip_nexthop.v4, nexthop_ip, sizeof(nexthop_ip));
 								nexthop_ip[40-1] = 0;
-								rb_hash_aset(hash_v, ID2SYM(rb_intern("next_hop")), rb_tainted_str_new2(nexthop_ip));							
+								rb_hash_aset(hash_v, next_hop_sym, rb_tainted_str_new2(nexthop_ip));							
 								break;
 							case EX_NEXT_HOP_v6:
 								nexthop_ip[0] = 0;
@@ -186,14 +215,14 @@ static VALUE process_file(VALUE self, VALUE filename_v) {
 								master_record.ip_nexthop.v6[1] = htonll(master_record.ip_nexthop.v6[1]);						
 								inet_ntop(AF_INET6, master_record.ip_nexthop.v6, nexthop_ip, sizeof(nexthop_ip));
 								nexthop_ip[40-1] = 0;
-								rb_hash_aset(hash_v, ID2SYM(rb_intern("next_hop")), rb_tainted_str_new2(nexthop_ip));							
+								rb_hash_aset(hash_v, next_hop_sym, rb_tainted_str_new2(nexthop_ip));							
 								break;
 							case EX_NEXT_HOP_BGP_v4:
 								master_record.ip_nexthop.v4=htonl(master_record.bgp_nexthop.v4);
 								nexthop_ip[0] = 0;
 								inet_ntop(AF_INET, &master_record.bgp_nexthop.v4, nexthop_ip, sizeof(nexthop_ip));
 								nexthop_ip[40-1] = 0;
-								rb_hash_aset(hash_v, ID2SYM(rb_intern("bgp_next_hop")), rb_tainted_str_new2(nexthop_ip));							
+								rb_hash_aset(hash_v, bgp_next_hop_sym, rb_tainted_str_new2(nexthop_ip));							
 								break;
 							case EX_NEXT_HOP_BGP_v6:
 								nexthop_ip[0] = 0;
@@ -201,11 +230,11 @@ static VALUE process_file(VALUE self, VALUE filename_v) {
 								master_record.bgp_nexthop.v6[1] = htonll(master_record.bgp_nexthop.v6[1]);						
 								inet_ntop(AF_INET6, master_record.bgp_nexthop.v6, nexthop_ip, sizeof(nexthop_ip));
 								nexthop_ip[40-1] = 0;
-								rb_hash_aset(hash_v, ID2SYM(rb_intern("bgp_next_hop")), rb_tainted_str_new2(nexthop_ip));							
+								rb_hash_aset(hash_v, bgp_next_hop_sym, rb_tainted_str_new2(nexthop_ip));							
 								break;
 							case EX_VLAN:
-								rb_hash_aset(hash_v, ID2SYM(rb_intern("source_vlan")), INT2FIX(master_record.src_vlan));	
-								rb_hash_aset(hash_v, ID2SYM(rb_intern("destination_vlan")), INT2FIX(master_record.dst_vlan));	
+								rb_hash_aset(hash_v, source_vlan_sym, INT2FIX(master_record.src_vlan));	
+								rb_hash_aset(hash_v, destination_vlan_sym, INT2FIX(master_record.dst_vlan));	
 								break;
 							default:
 								;
@@ -214,7 +243,7 @@ static VALUE process_file(VALUE self, VALUE filename_v) {
 					}
 																				
 					// Yield to the ruby block
-					rb_yield(hash_v);
+					rb_yield(hash_v);			
 				}
 
 			} else if (flow_record->type == ExtensionMapType) {
