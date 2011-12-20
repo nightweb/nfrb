@@ -40,11 +40,11 @@ typedef uint32_t    pointer_addr_t;
 static VALUE process_file(VALUE self, VALUE filename_v) {
 	master_record_t	master_record;
 	common_record_t *flow_record = NULL;
-	int done, ret, i;
+	int done, ret, i, id;
 	nffile_t *nffile = NULL;
 	extension_map_list_t extension_map_list;
 	VALUE hash_v = Qnil;
-	char source_ip[40], destination_ip[40];
+	char source_ip[40], destination_ip[40], nexthop_ip[40];
 	static char *filename = NULL;
 	
 	if (!rb_block_given_p())
@@ -117,7 +117,8 @@ static VALUE process_file(VALUE self, VALUE filename_v) {
 					}
 					source_ip[40-1] = 0;
 					destination_ip[40-1] = 0;
-	
+
+					// netflow common record fields
 					rb_hash_aset(hash_v, ID2SYM(rb_intern("source_address")), rb_tainted_str_new2(source_ip));
 					rb_hash_aset(hash_v, ID2SYM(rb_intern("destination_address")), rb_tainted_str_new2(destination_ip));
 					rb_hash_aset(hash_v, ID2SYM(rb_intern("first_seen")), INT2NUM(master_record.first));	
@@ -127,11 +128,91 @@ static VALUE process_file(VALUE self, VALUE filename_v) {
 					rb_hash_aset(hash_v, ID2SYM(rb_intern("protocol")), INT2FIX(master_record.prot));
 					rb_hash_aset(hash_v, ID2SYM(rb_intern("source_port")), INT2FIX(master_record.srcport));
 					rb_hash_aset(hash_v, ID2SYM(rb_intern("destination_port")), INT2FIX(master_record.dstport));	
+					rb_hash_aset(hash_v, ID2SYM(rb_intern("tcp_flags")), INT2FIX(master_record.tcp_flags));	
 					rb_hash_aset(hash_v, ID2SYM(rb_intern("packets")), INT2NUM((unsigned long long) master_record.dPkts));
 					rb_hash_aset(hash_v, ID2SYM(rb_intern("bytes")), INT2NUM((unsigned long long) master_record.dOctets));	
-					rb_hash_aset(hash_v, ID2SYM(rb_intern("source_as")), INT2NUM(master_record.srcas));
-					rb_hash_aset(hash_v, ID2SYM(rb_intern("destination_as")), INT2NUM(master_record.dstas));	
-					
+					rb_hash_aset(hash_v, ID2SYM(rb_intern("forwarding_status")), INT2FIX(master_record.fwd_status));	
+					rb_hash_aset(hash_v, ID2SYM(rb_intern("tos")), INT2FIX(master_record.tos));	
+
+					rb_hash_aset(hash_v, ID2SYM(rb_intern("input_interface")), Qnil);
+					rb_hash_aset(hash_v, ID2SYM(rb_intern("output_interface")), Qnil);
+					rb_hash_aset(hash_v, ID2SYM(rb_intern("destination_as")), Qnil);	
+					rb_hash_aset(hash_v, ID2SYM(rb_intern("source_as")), Qnil);
+					rb_hash_aset(hash_v, ID2SYM(rb_intern("source_mask")), Qnil);	
+					rb_hash_aset(hash_v, ID2SYM(rb_intern("destination_mask")), Qnil);
+					rb_hash_aset(hash_v, ID2SYM(rb_intern("destination_tos")), Qnil);
+					rb_hash_aset(hash_v, ID2SYM(rb_intern("direction")), Qnil);
+					rb_hash_aset(hash_v, ID2SYM(rb_intern("next_hop")), Qnil);	
+					rb_hash_aset(hash_v, ID2SYM(rb_intern("bgp_next_hop")), Qnil);	
+					rb_hash_aset(hash_v, ID2SYM(rb_intern("source_vlan")), Qnil);	
+					rb_hash_aset(hash_v, ID2SYM(rb_intern("destination_vlan")), Qnil);
+													
+					// netflow extension fields
+					i=0;
+					while ( (id = master_record.map_ref->ex_id[i++]) != 0 ) {
+						switch(id) {
+							case EX_IO_SNMP_2:
+								rb_hash_aset(hash_v, ID2SYM(rb_intern("input_interface")), INT2FIX(master_record.input));
+								rb_hash_aset(hash_v, ID2SYM(rb_intern("output_interface")), INT2FIX(master_record.output));
+								break;
+							case EX_IO_SNMP_4:
+								rb_hash_aset(hash_v, ID2SYM(rb_intern("input_interface")), INT2NUM(master_record.input));
+								rb_hash_aset(hash_v, ID2SYM(rb_intern("output_interface")), INT2NUM(master_record.output));
+								break;
+							case EX_AS_2:
+								rb_hash_aset(hash_v, ID2SYM(rb_intern("destination_as")), INT2FIX(master_record.dstas));	
+								rb_hash_aset(hash_v, ID2SYM(rb_intern("source_as")), INT2FIX(master_record.input));
+								break;
+							case EX_AS_4:
+								rb_hash_aset(hash_v, ID2SYM(rb_intern("destination_as")), INT2NUM(master_record.dstas));	
+								rb_hash_aset(hash_v, ID2SYM(rb_intern("source_as")), INT2NUM(master_record.input));
+								break;
+							case EX_MULIPLE:
+								rb_hash_aset(hash_v, ID2SYM(rb_intern("source_mask")), INT2NUM(master_record.src_mask));	
+								rb_hash_aset(hash_v, ID2SYM(rb_intern("destination_mask")), INT2NUM(master_record.dst_mask));
+								rb_hash_aset(hash_v, ID2SYM(rb_intern("destination_tos")), INT2FIX(master_record.dst_tos));
+								rb_hash_aset(hash_v, ID2SYM(rb_intern("direction")), INT2FIX(master_record.dir));
+								break;
+							case EX_NEXT_HOP_v4:
+								master_record.ip_nexthop.v4=htonl(master_record.ip_nexthop.v4);
+								nexthop_ip[0] = 0;
+								inet_ntop(AF_INET, &master_record.ip_nexthop.v4, nexthop_ip, sizeof(nexthop_ip));
+								nexthop_ip[40-1] = 0;
+								rb_hash_aset(hash_v, ID2SYM(rb_intern("next_hop")), rb_tainted_str_new2(nexthop_ip));							
+								break;
+							case EX_NEXT_HOP_v6:
+								nexthop_ip[0] = 0;
+								master_record.ip_nexthop.v6[0] = htonll(master_record.ip_nexthop.v6[0]);
+								master_record.ip_nexthop.v6[1] = htonll(master_record.ip_nexthop.v6[1]);						
+								inet_ntop(AF_INET6, master_record.ip_nexthop.v6, nexthop_ip, sizeof(nexthop_ip));
+								nexthop_ip[40-1] = 0;
+								rb_hash_aset(hash_v, ID2SYM(rb_intern("next_hop")), rb_tainted_str_new2(nexthop_ip));							
+								break;
+							case EX_NEXT_HOP_BGP_v4:
+								master_record.ip_nexthop.v4=htonl(master_record.bgp_nexthop.v4);
+								nexthop_ip[0] = 0;
+								inet_ntop(AF_INET, &master_record.bgp_nexthop.v4, nexthop_ip, sizeof(nexthop_ip));
+								nexthop_ip[40-1] = 0;
+								rb_hash_aset(hash_v, ID2SYM(rb_intern("bgp_next_hop")), rb_tainted_str_new2(nexthop_ip));							
+								break;
+							case EX_NEXT_HOP_BGP_v6:
+								nexthop_ip[0] = 0;
+								master_record.bgp_nexthop.v6[0] = htonll(master_record.bgp_nexthop.v6[0]);
+								master_record.bgp_nexthop.v6[1] = htonll(master_record.bgp_nexthop.v6[1]);						
+								inet_ntop(AF_INET6, master_record.bgp_nexthop.v6, nexthop_ip, sizeof(nexthop_ip));
+								nexthop_ip[40-1] = 0;
+								rb_hash_aset(hash_v, ID2SYM(rb_intern("bgp_next_hop")), rb_tainted_str_new2(nexthop_ip));							
+								break;
+							case EX_VLAN:
+								rb_hash_aset(hash_v, ID2SYM(rb_intern("source_vlan")), INT2FIX(master_record.src_vlan));	
+								rb_hash_aset(hash_v, ID2SYM(rb_intern("destination_vlan")), INT2FIX(master_record.dst_vlan));	
+								break;
+							default:
+								;
+								// Not implemented
+						}
+					}
+																				
 					// Yield to the ruby block
 					rb_yield(hash_v);
 				}
