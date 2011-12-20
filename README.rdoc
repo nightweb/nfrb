@@ -12,17 +12,21 @@ Nfrb is a very simple yet fast gem that can be used to parse nfcapd files.
    # rake install
 
 === Sample code
-  
+
+nfrb-bech.rb:
+
    require 'nfrb'
    
-   nfparser = NfRb::NfFile.new
+   raise ArgumentError, "Missing nfcapd file" if ARGV.count < 1     
    
+   nfparser = NfRb::NfFile.new
+        
    i=0
    start_t = Time.now
    
-   nfparser.process_file("./nfcapd.201112181720") do |flow|
-   #puts flow.inspect();
-   i+=1
+   nfparser.process_file(ARGV[0]) do |flow| 
+   # puts flow.inspect(); 
+     i+=1 
    end
    
    stop_t = Time.now
@@ -30,10 +34,11 @@ Nfrb is a very simple yet fast gem that can be used to parse nfcapd files.
    puts "#{i} flows processed in #{stop_t - start_t} seconds."
    puts "Flows per seconds = #{i / (stop_t - start_t)}"
 
-=== Sample output benchmark (i7)
+=== Sample output benchmark (3.4 Ghz Intel Core i7)
 
-   325602 flows processed in 0.714601 seconds.
-   Flows per seconds = 455641.679762553
+   # bundle exec ruby nfrb-bech.rb nfcapd.201112181720 
+   325602 flows processed in 0.67114 seconds.
+   Flows per seconds = 488513.404029311
 
 == Contributing to nfrb
  
@@ -47,6 +52,5 @@ Nfrb is a very simple yet fast gem that can be used to parse nfcapd files.
 
 == Copyright
 
-Copyright (c) 2011 Davide Guerri. See LICENSE.txt for
-further details.
+Copyright (c) 2011 Davide Guerri. See LICENSE.txt for further details.
 
