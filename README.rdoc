@@ -24,7 +24,7 @@ nfrb-bech.rb:
    i=0
    start_t = Time.now
    
-   nfparser.process_file(ARGV) do |flow|
+   nfparser.process_files(ARGV) do |flow|
    # puts flow.inspect(); 
      i+=1 
    end
