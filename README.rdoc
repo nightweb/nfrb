@@ -17,14 +17,14 @@ nfrb-bech.rb:
 
    require 'nfrb'
    
-   raise ArgumentError, "Missing nfcapd file" if ARGV.count < 1     
+   raise ArgumentError, "Missing nfcapd files" if ARGV.count < 1
    
-   nfparser = NfRb::NfFile.new
+   nfparser = NfRb::NfReader.new
         
    i=0
    start_t = Time.now
    
-   nfparser.process_file(ARGV[0]) do |flow| 
+   nfparser.process_file(ARGV) do |flow|
    # puts flow.inspect(); 
      i+=1 
    end
