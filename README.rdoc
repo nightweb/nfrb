@@ -19,7 +19,7 @@ Nfrb is a very simple yet fast gem that can be used to parse nfcapd files.
 
 ==== Bundler
 
-  gem "nfrb", "~> 0.0.1.alpha"
+  gem "nfrb", "~> 0.1.0.release"
 
 === Sample code
 
