@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = "nfrb"
-  s.version = "0.1.0.release"
+  s.version = "0.1.1.release"
 
   s.required_rubygems_version = Gem::Requirement.new("> 1.3.1") if s.respond_to? :required_rubygems_version=
   s.authors = ["Davide Guerri"]
