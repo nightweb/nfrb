@@ -43,6 +43,7 @@ Gem::Specification.new do |s|
     "ext/rb_nfrb/util.h",
     "lib/nfrb.rb",
     "lib/nfrb/version.rb",
+    "nfrb.gemspec",
     "test/helper.rb",
     "test/test_nfrb.rb"
   ]
