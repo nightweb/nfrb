@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = "nfrb"
-  s.version = "0.1.1.release"
+  s.version = "0.1.2"
 
-  s.required_rubygems_version = Gem::Requirement.new("> 1.3.1") if s.respond_to? :required_rubygems_version=
+  s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Davide Guerri"]
-  s.date = "2012-03-03"
+  s.date = "2012-03-04"
   s.description = "Nfrb is a very simple yet fast gem that can be used to parse nfcapd files."
   s.email = "davide.guerri@gmail.com"
   s.extensions = ["ext/rb_nfrb/extconf.rb"]
