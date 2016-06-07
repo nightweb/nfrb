@@ -259,9 +259,9 @@ static VALUE rb_process_file(VALUE self, VALUE filename_v) {
     Data_Get_Struct(self, nfreader_t, nfreader_prt);
     InitExtensionMaps(&nfreader_prt->ext_maps);
 
-	nffile = OpenFile(RSTRING(filename_v)->ptr, NULL);
+	nffile = OpenFile(RSTRING_PTR(filename_v), NULL);
 	if (!nffile)
-	    rb_raise(rb_eIOError, "problem opening file '%s'", RSTRING(filename_v)->ptr);
+	    rb_raise(rb_eIOError, "problem opening file '%s'", RSTRING_PTR(filename_v));
 
     ret = process_file(&nfreader_prt->ext_maps, nffile);
 
@@ -292,9 +292,9 @@ static VALUE rb_process_files(VALUE self, VALUE filenames_a) {
 	    filename_v = rb_ary_entry(filenames_a, i);
 	    Check_Type(filename_v, T_STRING);
 
-	    nffile = OpenFile(RSTRING(filename_v)->ptr, NULL);
+	    nffile = OpenFile(RSTRING_PTR(filename_v), NULL);
 	    if (!nffile)
-		    rb_raise(rb_eIOError, "problem opening file '%s'", RSTRING(filename_v)->ptr);
+		    rb_raise(rb_eIOError, "problem opening file '%s'", RSTRING_PTR(filename_v));
 
         ret = process_file(&nfreader_prt->ext_maps, nffile);
 
